@@ -102,14 +102,17 @@ WindowDownloadChunksSeen::redraw() {
   while (itrTransfer != transferChunks.end() && (uint32_t)(chunk - seen) > (*itrTransfer)->index())
     itrTransfer++;
 
+  int	done;
   for (unsigned int y = 1; y < m_canvas->height() && chunk < last; ++y) {
     m_canvas->print(0, y, "%5u ", (int)(chunk - seen));
 
     while (chunk < last) {
       chtype attr;
 
+      done = 0;
       if (bitfield->get(chunk - seen)) {
         attr = A_NORMAL;
+	done = 1;
       } else if (itrTransfer != transferChunks.end() && (uint32_t)(chunk - seen) == (*itrTransfer)->index()) {
         if (std::find_if((*itrTransfer)->begin(), (*itrTransfer)->end(), std::mem_fun_ref(&torrent::Block::is_transfering)) != (*itrTransfer)->end())
           attr = A_REVERSE;
@@ -120,7 +123,10 @@ WindowDownloadChunksSeen::redraw() {
         attr = A_BOLD;
       }
 
-      m_canvas->print_char(attr | rak::value_to_hexchar<0>(std::min<uint8_t>(*chunk, 0xF)));
+      if (done == 0)
+	m_canvas->print_char(attr | rak::value_to_hexchar<0>(std::min<uint8_t>(*chunk, 0xF)));
+      else
+	m_canvas->print_char('.');
       chunk++;
 
       if ((chunk - seen) % 10 == 0) {
